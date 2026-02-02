@@ -1,94 +1,122 @@
-## NOTICE
+# FTC Dashboard
 
-This repository contains the public FTC SDK for the DECODE (2025-2026) competition season.
+FTC Dashboard provides telemetry and monitoring tools for FTC robots during operation with the following features:
 
-## Welcome!
-This GitHub repository contains the source code that is used to build an Android app to control a *FIRST* Tech Challenge competition robot.  To use this SDK, download/clone the entire project to your local computer.
+- Live telemetry with plots and field graphics
+- Live configuration variables
+- Camera streaming
+- Limited op mode controls and gamepad support
+  - Note: Gamepad support is volatile due to unstable browser APIs
+- Custom dashboard layouts
+- Telemetry CSV export
 
-## Requirements
-To use this Android Studio project, you will need Android Studio Ladybug (2024.2) or later.
+Check out our [online documentation](https://acmerobotics.github.io/ftc-dashboard).
 
-To program your robot in Blocks or OnBot Java, you do not need Android Studio.
+|       Screenshot of custom layout        |          Screenshot with theme           |
+| :--------------------------------------: | :--------------------------------------: |
+| ![](docs/images/readme-screenshot-2.jpg) | ![](docs/images/readme-screenshot-1.jpg) |
 
-## Getting Started
-If you are new to robotics or new to the *FIRST* Tech Challenge, then you should consider reviewing the [FTC Blocks Tutorial](https://ftc-docs.firstinspires.org/programming_resources/blocks/Blocks-Tutorial.html) to get familiar with how to use the control system:
+# Installation
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[FTC Blocks Online Tutorial](https://ftc-docs.firstinspires.org/programming_resources/blocks/Blocks-Tutorial.html)
+## Basic
 
-Even if you are an advanced Java programmer, it is helpful to start with the [FTC Blocks tutorial](https://ftc-docs.firstinspires.org/programming_resources/blocks/Blocks-Tutorial.html), and then migrate to the [OnBot Java Tool](https://ftc-docs.firstinspires.org/programming_resources/onbot_java/OnBot-Java-Tutorial.html) or to [Android Studio](https://ftc-docs.firstinspires.org/programming_resources/android_studio_java/Android-Studio-Tutorial.html) afterwards.
+1. Open [`build.dependencies.gradle`](https://github.com/FIRST-Tech-Challenge/FtcRobotController/blob/master/build.dependencies.gradle)
+2. In the `repositories` section, add `maven { url = 'https://maven.brott.dev/' }`
+3. Add the dashboard implementation (see the [GitHub releases page](https://github.com/acmerobotics/ftc-dashboard/releases) for the latest version number):
+    - If you’re using a normal SDK setup, in the `dependencies` section, add the following:
+      ```gradle
+      implementation 'com.acmerobotics.dashboard:dashboard:0.5.1'
+      ```
+    - If you’re using OpenRC or have non-standard SDK dependencies, in the `dependencies` section, add the following:
+      ```gradle
+      implementation('com.acmerobotics.dashboard:dashboard:0.5.1') {
+        exclude group: 'org.firstinspires.ftc'
+      }
+      ```
 
-## Downloading the Project
-If you are an Android Studio programmer, there are several ways to download this repo.  Note that if you use the Blocks or OnBot Java Tool to program your robot, then you do not need to download this repository.
+# Development
 
-* If you are a git user, you can clone the most current version of the repository:
+## Installation
 
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;git clone https://github.com/FIRST-Tech-Challenge/FtcRobotController.git</p>
+1. Install Node.js
 
-* Or, if you prefer, you can use the "Download Zip" button available through the main repository page.  Downloading the project as a .ZIP file will keep the size of the download manageable.
+   - Note: Node.js 16+ is required for builds to work on M1 MacBooks
+   - Current Node version used in gradle builds can be found in [FtcDashboard/build.gradle](https://github.com/acmerobotics/ftc-dashboard/blob/master/FtcDashboard/build.gradle#L33)
+   - Node version is `18.12.1` as of time of writing
 
-* You can also download the project folder (as a .zip or .tar.gz archive file) from the Downloads subsection of the [Releases](https://github.com/FIRST-Tech-Challenge/FtcRobotController/releases) page for this repository.
+2. Install Yarn
 
-* The Releases page also contains prebuilt APKs.
+   - Not explicitly required and provides little advantage over modern `npm` (as of the time of writing)
+   - Further instructions will however reference `yarn` over `npm` for historical reasons
 
-Once you have downloaded and uncompressed (if needed) your folder, you can use Android Studio to import the folder  ("Import project (Eclipse ADT, Gradle, etc.)").
+3. Browser FTC Dashboard client is located in `client`
 
-## Getting Help
-### User Documentation and Tutorials
-*FIRST* maintains online documentation with information and tutorials on how to use the *FIRST* Tech Challenge software and robot control system.  You can access this documentation using the following link:
+4. Run `yarn` (alternatively `npm install`) to install dependencies
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[FIRST Tech Challenge Documentation](https://ftc-docs.firstinspires.org/index.html)
+   - This only need be done once
 
-Note that the online documentation is an "evergreen" document that is constantly being updated and edited.  It contains the most current information about the *FIRST* Tech Challenge software and control system.
+5. Optionally, specify the server IP address through the environment variable `VITE_REACT_APP_HOST`
 
-### Javadoc Reference Material
-The Javadoc reference documentation for the FTC SDK is now available online.  Click on the following link to view the FTC SDK Javadoc documentation as a live website:
+   - Details on Vite's environment variables can be found [here](https://vitejs.dev/guide/env-and-mode.html)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[FTC Javadoc Documentation](https://javadoc.io/doc/org.firstinspires.ftc)
+   - Default IPs:
+     - Android Phone: `192.168.49.1`
+     - Control Hub: `192.168.43.1`
 
-### Online User Forum
-For technical questions regarding the Control System or the FTC SDK, please visit the FIRST Tech Challenge Community site:
+6. Run `yarn dev` (alternatively `npm run dev`) to start the development server
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[FIRST Tech Challenge Community](https://ftc-community.firstinspires.org/)
+   - This will start a development server on [`http://localhost:3000`](http://localhost:3000) by default
+   - Navigate to this address in your browser to view the dashboard client
+   - The development server will automatically reload when changes are made to the source code
 
-### Sample OpModes
-This project contains a large selection of Sample OpModes (robot code examples) which can be cut and pasted into your /teamcode folder to be used as-is, or modified to suit your team's needs.
+## Mock server
 
-Samples Folder: &nbsp;&nbsp; [/FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/external/samples](FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/external/samples)
+To test without an FTC app, run the mock server located at `DashboardCore/src/test/java/com/acmerobotics/dashboard/TestServer.java`.
 
-The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc/teamcode](TeamCode/src/main/java/org/firstinspires/ftc/teamcode) folder contains an explanation of the sample naming convention, and instructions on how to copy them to your own project space.
+- Mock server is a simple Java server hosting mock FTC op modes
+- A test sample op mode can be found at [`TestSineWaveOpMode.java`](https://github.com/acmerobotics/ftc-dashboard/blob/master/DashboardCore/src/test/java/com/acmerobotics/dashboard/TestSineWaveOpMode.java)
+- Test op modes are registered in [`TestOpModeManager.java`](https://github.com/acmerobotics/ftc-dashboard/blob/8ac8b29257dede5f4a13c440fe6756efc270cbb8/DashboardCore/src/test/java/com/acmerobotics/dashboard/testopmode/TestOpModeManager.java#L10)
 
-# Release Information
+# Basic Architecture
 
-## Version 11.0 (20250827-105138)
+## Java Server
 
-### Enhancements
+Dashboard's server is split into two packages, `DashboardCore` and `FtcDashboard`
 
-* OnBotJava now has the concept of a project.  
-  A project is a collection of related files.  A project may be chosen by selecting 'Example Project'
-  from the 'File type:' dropdown.  Doing so will populate the dropdown to the immediate right with 
-  a list of projects to choose from.
-  When selecting a project all of the related files appear in the left pane of the workspace 
-  underneath a directory with the chosen project name.
-  This is useful for example for ConceptExternalHardwareClass which has a dependency upon
-  RobotHardware.  This feature simplifies the usage of this Concept example by automatically
-  pulling in dependent classes.
-* Adds support for AndyMark ToF, IMU, and Color sensors.
-* The Driver Station app indicates if WiFi is disabled on the device.
-* Adds several features to the Color Processing software:
-  * DECODE colors `ARTIFACT_GREEN` and `ARTIFACT_PURPLE`
-  * Choice of the order of pre-processing steps Erode and Dilate
-  * Best-fit preview shape called `circleFit`, an alternate to the existing `boxFit`
-  * Sample OpMode `ConceptVisionColorLocator_Circle`, an alternate to the renamed `ConceptVisionColorLocator_Rectangle`
-* The Driver Station app play button has a green background with a white play symbol if
-  * the driver station and robot controller are connected and have the same team number
-  * there is at least one gamepad attached
-  * the timer is enabled (for an Autonomous OpMode)
-* Updated AprilTag Library for DECODE. Notably, getCurrentGameTagLibrary() now returns DECODE tags.
-  * Since the AprilTags on the Obelisk should not be used for localization, the ConceptAprilTagLocalization samples only use those tags without the name 'Obelisk' in them.
-* OctoQuad I2C driver updated to support firmware v3.x 
-  * Adds support for odometry localizer on MK2 hardware revision
-  * Adds ability to track position for an absolute encoder across multiple rotations
-  * Note that some driver APIs have changed; minor updates to user software may be required
-  * Requires firmware v3.x. For instructions on updating firmware, see
-    https://github.com/DigitalChickenLabs/OctoQuad/blob/master/documentation/OctoQuadDatasheet_Rev_3.0C.pdf
- * The hardware loop has been updated for better performance.
+- [Dashboard Core](https://github.com/acmerobotics/ftc-dashboard/tree/master/DashboardCore/src/main/java/com/acmerobotics/dashboard)
+  - A standalone library that can be used to create a dashboard server for any Java application
+- [FtcDashboard](https://github.com/acmerobotics/ftc-dashboard/tree/master/FtcDashboard/src/main/java/com/acmerobotics/dashboard)
+  - A wrapper around `DashboardCore` that provides relevant tooling and hooks for FTC teams
+  - Contains the API FTC teams will access and manipulate through their own code
+  - This package also contains the browser client source
+
+## Browser Client
+
+Primary interface as a web-client acessible to the end-user through a web browser
+
+- Located in [`client`](https://github.com/acmerobotics/ftc-dashboard/tree/master/client)
+- Installation and run instructions mentioned above
+- TypeScript + React application
+- Vite for builds
+- Web Socket connection to the dashboard server
+
+### Relevant files
+
+- [Dashboard.tsx](https://github.com/acmerobotics/ftc-dashboard/blob/master/client/src/components/Dashboard/Dashboard.tsx)
+  - Primary functional entrypoint
+- [LayoutPreset.tsx](https://github.com/acmerobotics/ftc-dashboard/blob/master/client/src/enums/LayoutPreset.tsx)
+  - Contains preset layouts
+- [`views/`](https://github.com/acmerobotics/ftc-dashboard/tree/master/client/src/components/views)
+  - Contains the various views that can be displayed on the dashboard
+    - Graphs
+    - Telemetry
+    - Gamepad
+    - etc
+- [`store/`](https://github.com/acmerobotics/ftc-dashboard/tree/master/client/src/store)
+  - Contains shared state management logic
+    - Web Socket connection
+    - Gamepad state management
+    - Storage middleware
+    - etc
+- Views subscribe to websocket updates via the Redux store
+  - Basic example can be found in the [`TelemetryView`](https://github.com/acmerobotics/ftc-dashboard/blob/8ac8b29257dede5f4a13c440fe6756efc270cbb8/FtcDashboard/dash/src/components/views/TelemetryView.tsx#L21) component

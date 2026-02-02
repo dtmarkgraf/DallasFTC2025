@@ -171,9 +171,6 @@ public class ConceptExploringIMUOrientation extends LinearOpMode {
 
     // apply any requested orientation changes.
     void updateOrientation() {
-
-        //RevHubOrientationOnRobot.LogoFacingDirection logo = RevHubOrientationOnRobot.LogoFacingDirection.FORWARD;
-        //RevHubOrientationOnRobot.UsbFacingDirection usb = RevHubOrientationOnRobot.UsbFacingDirection.UP;
         RevHubOrientationOnRobot.LogoFacingDirection logo = logoFacingDirections[logoFacingDirectionPosition];
         RevHubOrientationOnRobot.UsbFacingDirection usb = usbFacingDirections[usbFacingDirectionPosition];
         try {
