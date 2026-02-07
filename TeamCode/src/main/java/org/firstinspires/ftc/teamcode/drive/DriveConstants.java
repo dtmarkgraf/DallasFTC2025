@@ -44,9 +44,9 @@ public class DriveConstants {
      * angular distances although most angular parameters are wrapped in Math.toRadians() for
      * convenience. Make sure to exclude any gear ratio included in MOTOR_CONFIG from GEAR_RATIO.
      */
-    public static double WHEEL_RADIUS = 3.543; // in
-    public static double GEAR_RATIO = 1; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 14; // in
+    public static double WHEEL_RADIUS = 1.7715; // in
+    public static double GEAR_RATIO = 0.825; // output (wheel) speed / input (motor) speed
+    public static double TRACK_WIDTH = 14.1; // in
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
@@ -54,9 +54,9 @@ public class DriveConstants {
      * motor encoders or have elected not to use them for velocity control, these values should be
      * empirically tuned.
      */
-    public static double kV = 0.006;
-    public static double kA = 0.0018;
-    public static double kStatic = 0.02;
+    public static double kV = 0.00895;
+    public static double kA = 0.00022;
+    public static double kStatic = 0.11898;
 
     /*
      * These values are used to generate the trajectories for you robot. To ensure proper operation,
@@ -67,16 +67,16 @@ public class DriveConstants {
      */
     public static double MAX_VEL = 90;
     public static double MAX_ACCEL = 90;
-    public static double MAX_ANG_VEL = Math.toRadians(360);
+    public static double MAX_ANG_VEL = 7.033604145050049;
     public static double MAX_ANG_ACCEL = Math.toRadians(360);
 
     /*
      * Adjust the orientations here to match your robot. See the FTC SDK documentation for details.
      */
     public static RevHubOrientationOnRobot.LogoFacingDirection LOGO_FACING_DIR =
-            RevHubOrientationOnRobot.LogoFacingDirection.UP;
+            RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
     public static RevHubOrientationOnRobot.UsbFacingDirection USB_FACING_DIR =
-            RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+            RevHubOrientationOnRobot.UsbFacingDirection.UP;
 
 
     public static double encoderTicksToInches(double ticks) {

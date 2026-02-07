@@ -9,6 +9,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.drivebase.DifferentialDrive;
@@ -26,9 +27,12 @@ import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.VisionProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 @TeleOp(name = "Solvers Gamepad Test")
@@ -42,11 +46,17 @@ public class SolversTest extends LinearOpMode {
     //motor vars
     MotorEx  leftMotor;
     MotorEx rightMotor;
-
+    public DcMotor collector     = null;
+    public static final double collectIN    =  1.0 ;   // Run arm motor up at 50% power
+    public static final double collectOUT  = -0.25 ;
     //pose vars
     double poseX;
     double poseY;
     double poseR;
+
+    //april tag processor
+    AprilTagProcessor aprilTagProcessor;
+    List<AprilTagDetection> aprilTagDetections;
 
     // encoder vars
     MotorEx encoderLeft, encoderRight;
@@ -107,12 +117,18 @@ public class SolversTest extends LinearOpMode {
         //telemetry init
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
-        //gamepad init
+        //create april tag processor
+        aprilTagProcessor = AprilTagProcessor.easyCreateWithDefaults();
+
+        //gamepad initd
         gamepad = new GamepadEx(gamepad1);
 
         //motors init
         leftMotor = new MotorEx(hardwareMap, "left_drive");
         rightMotor = new MotorEx(hardwareMap, "right_drive");
+        collector    = hardwareMap.get(DcMotor.class, "CollectorCoreHex");
+
+
 
         //drive system init
         drive = new DifferentialDrive(leftMotor, rightMotor);
@@ -122,6 +138,7 @@ public class SolversTest extends LinearOpMode {
 
         new VisionPortal.Builder()
                 .addProcessor(processor)
+                .addProcessor(aprilTagProcessor)
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .enableLiveView(true)
                 .build();
@@ -159,13 +176,26 @@ public class SolversTest extends LinearOpMode {
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
             //drive run:
-            drive.arcadeDrive(gamepad.getLeftY(), gamepad.getRightX());
+            drive.arcadeDrive(gamepad.getLeftY() * .6, gamepad.getRightX() * .6);
 
-            //hit a to test telemetry
-            if (gamepad.getButton(GamepadKeys.Button.A)) {
-                telemetry.addData("Button", "pressed");
+            //Ball Collector controls
+            if (gamepad1.y) {
+                collector.setPower(collectIN);
+            } else if (gamepad1.a) {
+                collector.setPower(collectOUT);
             } else {
-                telemetry.addData("Button", "not pressed");
+                collector.setPower(0.0);
+            }
+
+            //april tag detections
+            aprilTagDetections = aprilTagProcessor.getDetections();
+            for (AprilTagDetection detection : aprilTagDetections) {
+                if (detection.metadata != null) {
+                    telemetry.addData("Tag", detection.id);
+                    telemetry.addData("Pose X", detection.ftcPose.x);
+                    telemetry.addData("Pose Y", detection.ftcPose.y);
+                    telemetry.addData("Pose Z", detection.ftcPose.z);
+                }
             }
 
             //odometry update

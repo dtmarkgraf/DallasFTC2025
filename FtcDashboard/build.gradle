@@ -4,7 +4,7 @@ buildscript {
 }
 
 plugins {
-    id "com.github.node-gradle.node" version "2.2.4"
+    id "com.github.node-gradle.node" version "7.1.0"
 }
 apply plugin: "com.android.library"
 apply plugin: "maven-publish"
@@ -19,26 +19,34 @@ android {
     defaultConfig {
         minSdkVersion 23
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 26
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
-    lintOptions {
+    lint {
         abortOnError false
+        targetSdk 26
     }
+    testOptions {
+        targetSdk 26
+    }
+
 }
 
 node {
     version = "18.12.1"
     download = true
-    nodeModulesDir = file("${project.projectDir}/../client")
 }
 
-yarn_build.dependsOn yarn_install
+tasks.withType(com.github.gradle.node.yarn.task.YarnTask) {
+    workingDir = file("${project.projectDir}/../client")
+}
+
+tasks.named("yarn_build").configure {
+    dependsOn "yarn_install"
+}
 
 task cleanDashAssets(type: Delete) {
     delete "${android.sourceSets.getByName("main").assets.srcDirs[0]}/dash"
@@ -52,7 +60,7 @@ task copyDashAssets(type: Copy) {
 }
 
 copyDashAssets.dependsOn cleanDashAssets
-copyDashAssets.dependsOn yarn_build
+copyDashAssets.dependsOn "yarn_build"
 
 android.libraryVariants.all { variant ->
     variant.preBuildProvider.get().dependsOn copyDashAssets
