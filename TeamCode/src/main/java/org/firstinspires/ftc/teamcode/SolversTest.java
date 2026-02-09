@@ -6,22 +6,18 @@ import android.graphics.Canvas;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.drivebase.DifferentialDrive;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
-import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
-import com.seattlesolvers.solverslib.hardware.RevIMU;
+import com.seattlesolvers.solverslib.hardware.SensorRevColorV3;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
-import com.seattlesolvers.solverslib.kinematics.DifferentialOdometry;
+import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 
 import org.firstinspires.ftc.robotcore.external.function.Consumer;
 import org.firstinspires.ftc.robotcore.external.function.Continuation;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
@@ -35,6 +31,11 @@ import org.opencv.core.Mat;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+enum Color {
+    GREEN,
+    PURPLE
+}
+
 @TeleOp(name = "Solvers Gamepad Test")
 public class SolversTest extends LinearOpMode {
     //FTC Dashboard init
@@ -46,9 +47,19 @@ public class SolversTest extends LinearOpMode {
     //motor vars
     MotorEx  leftMotor;
     MotorEx rightMotor;
-    public DcMotor collector     = null;
-    public static final double collectIN    =  1.0 ;   // Run arm motor up at 50% power
-    public static final double collectOUT  = -0.25 ;
+    MotorEx collectorMotor;
+
+    //flipper servos
+    ServoEx flipperServo1;
+    ServoEx flipperServo2;
+    ServoEx flipperServo3;
+
+
+    //color sensors
+    SensorRevColorV3 colorSensor1;
+    SensorRevColorV3 colorSensor2;
+    SensorRevColorV3 colorSensor3;
+
     //pose vars
     double poseX;
     double poseY;
@@ -126,15 +137,23 @@ public class SolversTest extends LinearOpMode {
         //motors init
         leftMotor = new MotorEx(hardwareMap, "left_drive");
         rightMotor = new MotorEx(hardwareMap, "right_drive");
-        collector    = hardwareMap.get(DcMotor.class, "CollectorCoreHex");
+        collectorMotor = new MotorEx(hardwareMap, "CollectorCoreHex");
 
+        //servo init
+        flipperServo1 = new ServoEx(hardwareMap, "flipper1");
+        flipperServo2 = new ServoEx(hardwareMap, "flipper2");
+        flipperServo3 = new ServoEx(hardwareMap, "flipper3");
 
+        //color sensor init
+        colorSensor1 = new SensorRevColorV3(hardwareMap, "color1");
+        colorSensor2 = new SensorRevColorV3(hardwareMap, "color2");
+        colorSensor3 = new SensorRevColorV3(hardwareMap, "color3");
 
         //drive system init
         drive = new DifferentialDrive(leftMotor, rightMotor);
 
         //camera stream init
-        final VisionPortalStreamingOpMode.CameraStreamProcessor processor = new VisionPortalStreamingOpMode.CameraStreamProcessor();
+        final CameraStreamProcessor processor = new CameraStreamProcessor();
 
         new VisionPortal.Builder()
                 .addProcessor(processor)
@@ -144,26 +163,6 @@ public class SolversTest extends LinearOpMode {
                 .build();
 
         FtcDashboard.getInstance().startCameraStream(processor, 0);
-
-        //imu init
-        imu = hardwareMap.get(IMU.class, "imu");
-
-        //set orientation
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
-        RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.UP;
-
-        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
-
-        //update imu with orientation
-        imu.initialize(new IMU.Parameters(orientationOnRobot));
-
-        //odometry init
-        DifferentialOdometry diffOdom = new DifferentialOdometry(
-                () -> leftMotor.getCurrentPosition() /  26.235,
-                () -> rightMotor.getCurrentPosition() / 26.235,
-                TRACKWIDTH
-        );
-        diffOdom.updatePose();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -180,12 +179,38 @@ public class SolversTest extends LinearOpMode {
 
             //Ball Collector controls
             if (gamepad1.y) {
-                collector.setPower(collectIN);
-            } else if (gamepad1.a) {
-                collector.setPower(collectOUT);
+                collectorMotor.set(1.0);
             } else {
-                collector.setPower(0.0);
+                collectorMotor.set(0.0);
             }
+
+            if (gamepad1.x) {
+                flipperServo3.set(0.0);
+            } else {
+                flipperServo3.set(1.0);
+            }
+
+            //g:r
+            //green r<.5g or not
+            //no ball <175
+
+            double a = colorSensor3.getARGB()[0];
+            double r = colorSensor3.getARGB()[1];
+            double g = colorSensor3.getARGB()[2];
+            double b = colorSensor3.getARGB()[3];
+
+            Color color;
+
+            if ((a + r + g + b) > 180) {
+                if (r < 0.33 * g) {
+                    color = Color.GREEN;
+                } else {
+                    color = Color.PURPLE;
+                }
+            } else {
+                color = null;
+            }
+            if (color != null) telemetry.addData("Color", color.toString());
 
             //april tag detections
             aprilTagDetections = aprilTagProcessor.getDetections();
@@ -198,22 +223,12 @@ public class SolversTest extends LinearOpMode {
                 }
             }
 
-            //odometry update
-            diffOdom.updatePose();
-
-            poseX = diffOdom.getPose().getX();
-            poseY = diffOdom.getPose().getY();
-            poseR = diffOdom.getPose().getHeading();
-
-            telemetry.addData("X", poseX);
-            telemetry.addData("Y", poseY);
-            telemetry.addData("R", poseR);
 
             //update field telemetry
-            packet = new TelemetryPacket();
+            /*packet = new TelemetryPacket();
             packet.fieldOverlay()
                     .drawImage("/images/ftc.jpg", 18, 18, poseX, poseY);
-            dashboard.sendTelemetryPacket(packet);
+            dashboard.sendTelemetryPacket(packet);*/
 
             //update telemetry every loop
             telemetry.update();
