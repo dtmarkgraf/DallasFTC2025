@@ -23,6 +23,7 @@ import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibra
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.VisionProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -49,19 +50,29 @@ public class SolversTest extends LinearOpMode {
     MotorEx collectorMotor;
 
     //flipper servos
+    ServoEx flipperServo0;
     ServoEx flipperServo1;
     ServoEx flipperServo2;
-    ServoEx flipperServo3;
 
     //servo stats
+    Boolean servoState0 = false;
     Boolean servoState1 = false;
     Boolean servoState2 = false;
-    Boolean servoState3 = false;
 
     //color sensors
+    SensorRevColorV3 colorSensor0;
     SensorRevColorV3 colorSensor1;
     SensorRevColorV3 colorSensor2;
-    SensorRevColorV3 colorSensor3;
+
+    //nothing threshold
+    Double sensorThreshold0 = 180.0;
+    Double sensorThreshold1 = 220.0;
+    Double sensorThreshold2 = 175.0;
+
+    //red threshold
+    Double redThreshold0 = 0.5;
+    Double redThreshold1 = 0.5;
+    Double redThreshold2 = 0.5;
 
     //pose vars
     double poseX;
@@ -81,7 +92,7 @@ public class SolversTest extends LinearOpMode {
     //field telemetry packet
     TelemetryPacket packet;
 
-    static Color getColor(SensorRevColorV3 colorSensor) {
+    static Color getColor(SensorRevColorV3 colorSensor, Double threshold, Double redThreshold) {
         //g:r
         //green r<.5g or not
         //no ball <175
@@ -93,8 +104,8 @@ public class SolversTest extends LinearOpMode {
 
         Color color;
 
-        if ((a + r + g + b) > 180) {
-            if (r < 0.33 * g) {
+        if ((a + r + g + b) > threshold) {
+            if (r < redThreshold * g) {
                 color = Color.GREEN;
             } else {
                 color = Color.PURPLE;
@@ -104,6 +115,15 @@ public class SolversTest extends LinearOpMode {
         }
 
         return color;
+    }
+
+    static Double getColorSum(SensorRevColorV3 colorSensor) {
+        double a = colorSensor.getARGB()[0];
+        double r = colorSensor.getARGB()[1];
+        double g = colorSensor.getARGB()[2];
+        double b = colorSensor.getARGB()[3];
+
+        return a + r + g +b;
     }
 
     //camera processor class
@@ -149,6 +169,7 @@ public class SolversTest extends LinearOpMode {
                 .setDrawTagOutline(true)
                 .setDrawAxes(true)
                 .setDrawTagID(true)
+                .setTagLibrary(AprilTagGameDatabase.getCurrentGameTagLibrary())
                 .build();
 
         //gamepad init
@@ -160,14 +181,14 @@ public class SolversTest extends LinearOpMode {
         collectorMotor = new MotorEx(hardwareMap, "CollectorCoreHex");
 
         //servo init
+        flipperServo0 = new ServoEx(hardwareMap, "flipper0");
         flipperServo1 = new ServoEx(hardwareMap, "flipper1");
         flipperServo2 = new ServoEx(hardwareMap, "flipper2");
-        flipperServo3 = new ServoEx(hardwareMap, "flipper3");
 
         //color sensor init
+        colorSensor0 = new SensorRevColorV3(hardwareMap, "color0");
         colorSensor1 = new SensorRevColorV3(hardwareMap, "color1");
         colorSensor2 = new SensorRevColorV3(hardwareMap, "color2");
-        colorSensor3 = new SensorRevColorV3(hardwareMap, "color3");
 
         //drive system init
         drive = new DifferentialDrive(leftMotor, rightMotor);
@@ -195,7 +216,7 @@ public class SolversTest extends LinearOpMode {
             telemetry.addData("Status", "Run Time: " + runtime);
 
             //drive run:
-            drive.arcadeDrive(gamepad.getLeftY() * .6, gamepad.getRightX() * .6);
+            drive.arcadeDrive(gamepad1.left_stick_y, gamepad1.right_stick_x);
 
             //Ball Collector controls
             if (gamepad1.right_trigger != 0.0) {
@@ -204,10 +225,15 @@ public class SolversTest extends LinearOpMode {
                 collectorMotor.set(0.0);
             }
 
+            if (gamepad1.b) { servoState0 = !servoState0; }
             if (gamepad1.x) { servoState1 = !servoState1; }
-            if (gamepad1.y) { servoState2 = !servoState2; }
-            if (gamepad1.a) { servoState3 = !servoState3; }
+            if (gamepad1.a) { servoState2 = !servoState2; }
 
+            if (servoState0) {
+                flipperServo0.set(0.0);
+            } else {
+                flipperServo0.set(1.0);
+            }
             if (servoState1) {
                 flipperServo1.set(0.0);
             } else {
@@ -218,19 +244,39 @@ public class SolversTest extends LinearOpMode {
             } else {
                 flipperServo2.set(1.0);
             }
-            if (servoState3) {
-                flipperServo3.set(0.0);
-            } else {
-                flipperServo3.set(1.0);
-            }
 
-            Color color1 = getColor(colorSensor1);
-            Color color2 = getColor(colorSensor2);
-            Color color3 = getColor(colorSensor3);
+            //get colors
+            Color color0 = getColor(colorSensor0, sensorThreshold0, redThreshold0);
+            Color color1 = getColor(colorSensor1, sensorThreshold1, redThreshold1);
+            Color color2 = getColor(colorSensor2, sensorThreshold2, redThreshold2);
 
+            if (color0 != null) telemetry.addData("Color Sensor 0", color0.toString());
             if (color1 != null) telemetry.addData("Color Sensor 1", color1.toString());
             if (color2 != null) telemetry.addData("Color Sensor 2", color2.toString());
-            if (color3 != null) telemetry.addData("Color Sensor 3", color3.toString());
+
+            //color sum
+            /*Double colorSum0 = getColorSum(colorSensor0);
+            Double colorSum1 = getColorSum(colorSensor1);
+            Double colorSum2 = getColorSum(colorSensor2);
+
+            telemetry.addData("Color Sum 0", colorSum0);
+            telemetry.addData("Color Sum 1", colorSum1);
+            telemetry.addData("Color Sum 2", colorSum2);
+
+            telemetry.addData("A0", colorSensor0.getARGB()[0]);
+            telemetry.addData("R0", colorSensor0.getARGB()[1]);
+            telemetry.addData("G0", colorSensor0.getARGB()[2]);
+            telemetry.addData("B0", colorSensor0.getARGB()[3]);
+
+            telemetry.addData("A1", colorSensor1.getARGB()[0]);
+            telemetry.addData("R1", colorSensor1.getARGB()[1]);
+            telemetry.addData("G1", colorSensor1.getARGB()[2]);
+            telemetry.addData("B1", colorSensor1.getARGB()[3]);
+
+            telemetry.addData("A2", colorSensor2.getARGB()[0]);
+            telemetry.addData("R2", colorSensor2.getARGB()[1]);
+            telemetry.addData("G2", colorSensor2.getARGB()[2]);
+            telemetry.addData("B2", colorSensor2.getARGB()[3]);*/
 
             //april tag detections
             aprilTagDetections = aprilTagProcessor.getDetections();
