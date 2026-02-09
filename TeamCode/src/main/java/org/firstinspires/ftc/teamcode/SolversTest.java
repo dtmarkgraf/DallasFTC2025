@@ -8,7 +8,6 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.drivebase.DifferentialDrive;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
@@ -73,26 +72,14 @@ public class SolversTest extends LinearOpMode {
     AprilTagProcessor aprilTagProcessor;
     List<AprilTagDetection> aprilTagDetections;
 
-    // encoder vars
-    MotorEx encoderLeft, encoderRight;
-
     //drive system var
     DifferentialDrive drive;
 
     //gamepad var
     GamepadEx gamepad;
 
-    //imu var
-    IMU imu;
-
     //field telemetry packet
     TelemetryPacket packet;
-
-    // define our trackwidth
-    static final double TRACKWIDTH = 13.7;
-
-    // convert ticks to inches
-    static final double TICKS_TO_INCHES = 15.3;
 
     static Color getColor(SensorRevColorV3 colorSensor) {
         //g:r
@@ -164,7 +151,7 @@ public class SolversTest extends LinearOpMode {
                 .setDrawTagID(true)
                 .build();
 
-        //gamepad initd
+        //gamepad init
         gamepad = new GamepadEx(gamepad1);
 
         //motors init
@@ -205,7 +192,7 @@ public class SolversTest extends LinearOpMode {
 
         //code to run on loop
         while (opModeIsActive()) {
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("Status", "Run Time: " + runtime);
 
             //drive run:
             drive.arcadeDrive(gamepad.getLeftY() * .6, gamepad.getRightX() * .6);
