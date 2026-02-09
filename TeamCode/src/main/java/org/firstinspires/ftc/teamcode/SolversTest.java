@@ -158,7 +158,11 @@ public class SolversTest extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         //create april tag processor
-        aprilTagProcessor = AprilTagProcessor.easyCreateWithDefaults();
+        aprilTagProcessor = new AprilTagProcessor.Builder()
+                .setDrawTagOutline(true)
+                .setDrawAxes(true)
+                .setDrawTagID(true)
+                .build();
 
         //gamepad initd
         gamepad = new GamepadEx(gamepad1);
