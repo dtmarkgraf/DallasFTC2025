@@ -42,7 +42,7 @@ public class SolversTest extends LinearOpMode {
     FtcDashboard dashboard = FtcDashboard.getInstance();
 
     //runtime var
-    private ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime runtime = new ElapsedTime();
 
     //motor vars
     MotorEx  leftMotor;
@@ -54,6 +54,10 @@ public class SolversTest extends LinearOpMode {
     ServoEx flipperServo2;
     ServoEx flipperServo3;
 
+    //servo stats
+    Boolean servoState1 = false;
+    Boolean servoState2 = false;
+    Boolean servoState3 = false;
 
     //color sensors
     SensorRevColorV3 colorSensor1;
@@ -89,6 +93,31 @@ public class SolversTest extends LinearOpMode {
 
     // convert ticks to inches
     static final double TICKS_TO_INCHES = 15.3;
+
+    static Color getColor(SensorRevColorV3 colorSensor) {
+        //g:r
+        //green r<.5g or not
+        //no ball <175
+
+        double a = colorSensor.getARGB()[0];
+        double r = colorSensor.getARGB()[1];
+        double g = colorSensor.getARGB()[2];
+        double b = colorSensor.getARGB()[3];
+
+        Color color;
+
+        if ((a + r + g + b) > 180) {
+            if (r < 0.33 * g) {
+                color = Color.GREEN;
+            } else {
+                color = Color.PURPLE;
+            }
+        } else {
+            color = null;
+        }
+
+        return color;
+    }
 
     //camera processor class
     public static class CameraStreamProcessor implements VisionProcessor, CameraStreamSource {
@@ -178,39 +207,39 @@ public class SolversTest extends LinearOpMode {
             drive.arcadeDrive(gamepad.getLeftY() * .6, gamepad.getRightX() * .6);
 
             //Ball Collector controls
-            if (gamepad1.y) {
+            if (gamepad1.right_trigger != 0.0) {
                 collectorMotor.set(1.0);
             } else {
                 collectorMotor.set(0.0);
             }
 
-            if (gamepad1.x) {
+            if (gamepad1.x) { servoState1 = !servoState1; }
+            if (gamepad1.y) { servoState2 = !servoState2; }
+            if (gamepad1.a) { servoState3 = !servoState3; }
+
+            if (servoState1) {
+                flipperServo1.set(0.0);
+            } else {
+                flipperServo1.set(1.0);
+            }
+            if (servoState2) {
+                flipperServo2.set(0.0);
+            } else {
+                flipperServo2.set(1.0);
+            }
+            if (servoState3) {
                 flipperServo3.set(0.0);
             } else {
                 flipperServo3.set(1.0);
             }
 
-            //g:r
-            //green r<.5g or not
-            //no ball <175
+            Color color1 = getColor(colorSensor1);
+            Color color2 = getColor(colorSensor2);
+            Color color3 = getColor(colorSensor3);
 
-            double a = colorSensor3.getARGB()[0];
-            double r = colorSensor3.getARGB()[1];
-            double g = colorSensor3.getARGB()[2];
-            double b = colorSensor3.getARGB()[3];
-
-            Color color;
-
-            if ((a + r + g + b) > 180) {
-                if (r < 0.33 * g) {
-                    color = Color.GREEN;
-                } else {
-                    color = Color.PURPLE;
-                }
-            } else {
-                color = null;
-            }
-            if (color != null) telemetry.addData("Color", color.toString());
+            if (color1 != null) telemetry.addData("Color Sensor 1", color1.toString());
+            if (color2 != null) telemetry.addData("Color Sensor 2", color2.toString());
+            if (color3 != null) telemetry.addData("Color Sensor 3", color3.toString());
 
             //april tag detections
             aprilTagDetections = aprilTagProcessor.getDetections();
@@ -222,7 +251,6 @@ public class SolversTest extends LinearOpMode {
                     telemetry.addData("Pose Z", detection.ftcPose.z);
                 }
             }
-
 
             //update field telemetry
             /*packet = new TelemetryPacket();
