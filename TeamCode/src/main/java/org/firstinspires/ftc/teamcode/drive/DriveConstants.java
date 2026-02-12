@@ -21,7 +21,9 @@ public class DriveConstants {
     /*
      * These are motor constants that should be listed online for your motors.
      */
-    public static final double TICKS_PER_REV = 239;
+    public static final double TICKS_PER_REV = 239; // Original value = 239
+    public static final double TICKS_PER_REV_RIGHT = 239; // Original value = 239
+    public static final double TICKS_PER_REV_LEFT = 250; // Original value = 239
     public static final double MAX_RPM = 575.3;
 
     /*
@@ -45,8 +47,8 @@ public class DriveConstants {
      * convenience. Make sure to exclude any gear ratio included in MOTOR_CONFIG from GEAR_RATIO.
      */
     public static double WHEEL_RADIUS = 1.7715; // in
-    public static double GEAR_RATIO = 0.825; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 14.1; // in
+    public static double GEAR_RATIO = 0.7322; // output (wheel) speed / input (motor) speed
+    public static double TRACK_WIDTH = 21.6; // in
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
@@ -54,9 +56,9 @@ public class DriveConstants {
      * motor encoders or have elected not to use them for velocity control, these values should be
      * empirically tuned.
      */
-    public static double kV = 0.00895;
-    public static double kA = 0.00022;
-    public static double kStatic = 0.11898;
+    public static double kV = 0.0105;
+    public static double kA = 0.0028;
+    public static double kStatic = 0.01;
 
     /*
      * These values are used to generate the trajectories for you robot. To ensure proper operation,
@@ -65,9 +67,9 @@ public class DriveConstants {
      * small and gradually increase them later after everything is working. All distance units are
      * inches.
      */
-    public static double MAX_VEL = 90;
-    public static double MAX_ACCEL = 90;
-    public static double MAX_ANG_VEL = 7.033604145050049;
+    public static double MAX_VEL = 65; // Original value 90
+    public static double MAX_ACCEL = 60; // Original value 90
+    public static double MAX_ANG_VEL = 7.5931782722473145;
     public static double MAX_ANG_ACCEL = Math.toRadians(360);
 
     /*
@@ -81,6 +83,14 @@ public class DriveConstants {
 
     public static double encoderTicksToInches(double ticks) {
         return WHEEL_RADIUS * 2 * Math.PI * GEAR_RATIO * ticks / TICKS_PER_REV;
+    }
+
+    public static double encoderTicksToInchesLeft(double ticks) {
+        return WHEEL_RADIUS * 2 * Math.PI * GEAR_RATIO * ticks / TICKS_PER_REV_LEFT;
+    }
+
+    public static double encoderTicksToInchesRight(double ticks) {
+        return WHEEL_RADIUS * 2 * Math.PI * GEAR_RATIO * ticks / TICKS_PER_REV_RIGHT;
     }
 
     public static double rpmToVelocity(double rpm) {

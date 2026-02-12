@@ -48,6 +48,7 @@ public class SolversTest extends LinearOpMode {
     MotorEx  leftMotor;
     MotorEx rightMotor;
     MotorEx collectorMotor;
+    MotorEx shooterMotor;
 
     //flipper servos
     ServoEx flipperServo0;
@@ -82,6 +83,9 @@ public class SolversTest extends LinearOpMode {
     //april tag processor
     AprilTagProcessor aprilTagProcessor;
     List<AprilTagDetection> aprilTagDetections;
+
+    //order
+    int pattern = 0;
 
     //drive system var
     DifferentialDrive drive;
@@ -179,6 +183,7 @@ public class SolversTest extends LinearOpMode {
         leftMotor = new MotorEx(hardwareMap, "left_drive");
         rightMotor = new MotorEx(hardwareMap, "right_drive");
         collectorMotor = new MotorEx(hardwareMap, "CollectorCoreHex");
+        shooterMotor = new MotorEx(hardwareMap, "shooter");
 
         //servo init
         flipperServo0 = new ServoEx(hardwareMap, "flipper0");
@@ -215,19 +220,48 @@ public class SolversTest extends LinearOpMode {
         while (opModeIsActive()) {
             telemetry.addData("Status", "Run Time: " + runtime);
 
+            if (pattern != 0) {
+                if (pattern == 1) {
+                    telemetry.addData("Status", "Green, Purple, Purple");
+                } else if (pattern == 2) {
+                    telemetry.addData("Status", "Purple, Green, Purple");
+                } else if (pattern == 3) {
+                    telemetry.addData("Status", "Green, Purple, Green");
+                }
+            } else {
+                telemetry.addData("Status", "No pattern loaded!");
+            }
+
             //drive run:
-            drive.arcadeDrive(gamepad1.left_stick_y, gamepad1.right_stick_x);
+            drive.arcadeDrive(-gamepad1.left_stick_y * 0.5, gamepad1.right_stick_x * 0.5);
 
             //Ball Collector controls
-            if (gamepad1.right_trigger != 0.0) {
+            if (gamepad1.left_trigger != 0.0) {
                 collectorMotor.set(1.0);
             } else {
                 collectorMotor.set(0.0);
             }
+            if (gamepad1.right_trigger != 0.0) {
+                shooterMotor.set(1.0);
+            } else {
+                shooterMotor.set(0.0);
+            }
 
-            if (gamepad1.b) { servoState0 = !servoState0; }
-            if (gamepad1.x) { servoState1 = !servoState1; }
-            if (gamepad1.a) { servoState2 = !servoState2; }
+            if (gamepad1.b) {
+                servoState0 = true;
+            } else {
+                servoState0 = false;
+            }
+            if (gamepad1.x) {
+                servoState1 = true;
+            } else {
+                servoState1 = false;
+            }
+            if (gamepad1.a) {
+                servoState2 = true;
+            } else {
+                servoState2 = false;
+            }
 
             if (servoState0) {
                 flipperServo0.set(0.0);
@@ -282,7 +316,18 @@ public class SolversTest extends LinearOpMode {
             aprilTagDetections = aprilTagProcessor.getDetections();
             for (AprilTagDetection detection : aprilTagDetections) {
                 if (detection.metadata != null) {
-                    telemetry.addData("Tag", detection.id);
+                    int tagId = detection.metadata.id;
+                    if (gamepad1.back) {
+                        if (tagId == 21) {
+                            pattern = 1;
+                        } else if (tagId == 22) {
+                            pattern = 2;
+                        } else if (tagId == 23) {
+                            pattern = 3;
+                        }
+                    }
+
+                    telemetry.addData("Tag", tagId);
                     telemetry.addData("Pose X", detection.ftcPose.x);
                     telemetry.addData("Pose Y", detection.ftcPose.y);
                     telemetry.addData("Pose Z", detection.ftcPose.z);
